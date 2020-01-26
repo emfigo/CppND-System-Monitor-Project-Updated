@@ -7,6 +7,10 @@
 #include "process.h"
 #include "processor.h"
 
+#include "linux_parser.h"
+
+using std::string;
+
 class System {
  public:
   Processor& Cpu();                   // TODO: See src/system.cpp
@@ -15,12 +19,14 @@ class System {
   long UpTime();                      // TODO: See src/system.cpp
   int TotalProcesses();               // TODO: See src/system.cpp
   int RunningProcesses();             // TODO: See src/system.cpp
-  std::string Kernel();               // TODO: See src/system.cpp
-  std::string OperatingSystem();      // TODO: See src/system.cpp
+  string Kernel(); const              // TODO: See src/system.cpp
+  string OperatingSystem(); const     // TODO: See src/system.cpp
 
   // TODO: Define any necessary private members
  private:
   Processor cpu_ = {};
+  string operatingSystemName_ = LinuxParser::OperatingSystem();
+  string kernelName_ = LinuxParser::Kernel();
   std::vector<Process> processes_ = {};
 };
 
