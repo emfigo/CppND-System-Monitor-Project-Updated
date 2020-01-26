@@ -8,10 +8,31 @@ using std::string;
 using std::vector;
 using std::stoi;
 
-// TODO: Return the aggregate CPU utilization
 float Processor::Utilization() { 
+  CPUTimes times = Processor::readCPUTimes();
+
+  int PrevIdle = prevTimes_.idle + prevTimes_.iowait;
+  int Idle = times.idle + times.iowait;
+
+  int PrevNonIdle = prevTimes_.user + prevTimes_.nice + prevTimes_.system + prevTimes_.irq + prevTimes_.softirq + prevTimes_.steal;
+  int NonIdle = times.user + times.nice + times.system + times.irq + times.softirq + times.steal;
+
+  int PrevTotal = PrevIdle + PrevNonIdle;
+  int Total = Idle + NonIdle;
+
+  // differentiate: actual value minus the previous one
+  int totald = Total - PrevTotal;
+  int idled = Idle - PrevIdle;
+
+  Processor::saveCPUTimes(times);
+
+  return ((totald - idled) * 1.0 ) / (totald * 1.0);
+}
+
+CPUTimes Processor::readCPUTimes() {
   vector<string> utilization = LinuxParser::CpuUtilization();
   CPUTimes times;
+
   times.user = stoi(utilization[0]);
   times.nice = stoi(utilization[1]);
   times.system = stoi(utilization[2]);
@@ -23,31 +44,18 @@ float Processor::Utilization() {
   times.guest = stoi(utilization[8]);
   times.guest_nice = stoi(utilization[9]);
 
-  int PrevIdle = previdle_ + previowait_;
-  int Idle = times.idle + times.iowait;
+  return times;
+}
 
-  int PrevNonIdle = prevuser_ + prevnice_ + prevsystem_ + previrq_ + prevsoftirq_ + prevsteal_;
-  int NonIdle = times.user + times.nice + times.system + times.irq + times.softirq + times.steal;
-
-  int PrevTotal = PrevIdle + PrevNonIdle;
-  int Total = Idle + NonIdle;
-
-  // differentiate: actual value minus the previous one
-  int totald = Total - PrevTotal;
-  int idled = Idle - PrevIdle;
-
-  float CPU_Percentage = ((totald - idled) * 1.0 ) / (totald * 1.0);
-
-  prevuser_ = times.user;
-  prevnice_ = times.nice;
-  prevsystem_ = times.system;
-  previdle_ = times.idle;
-  previowait_ = times.iowait;
-  previrq_ = times.irq;
-  prevsoftirq_ = times.softirq;
-  prevsteal_ = times.steal;
-  prevguest_ = times.guest;
-  prevguest_nice_ = times.guest_nice;
-
-  return CPU_Percentage;
+void Processor::saveCPUTimes(CPUTimes const times) {
+  prevTimes_.user = times.user;
+  prevTimes_.nice = times.nice;
+  prevTimes_.system = times.system;
+  prevTimes_.idle = times.idle;
+  prevTimes_.iowait = times.iowait;
+  prevTimes_.irq = times.irq;
+  prevTimes_.softirq = times.softirq;
+  prevTimes_.steal = times.steal;
+  prevTimes_.guest = times.guest;
+  prevTimes_.guest_nice = times.guest_nice;
 }
